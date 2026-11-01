@@ -14,10 +14,10 @@ st.set_page_config(
 st.title("🍎 Fruit Detection System")
 st.subheader("GROUP MEMBERS")
 
-st.write("1. MUGISHA EMMANUEL — 20RP00370")
-st.write("2. NDAYIMENYE SAMUEL — 26RP02292")
-st.write("3. IRABISHOBOYE GILBERT — 26RP00139")
-st.write("4. NSABIMANA RUKUNDO OLIVIEL — 26RP01994")
+st.write("1. MFITUMUKIZA Deogratias 26RP02925")
+st.write("2. UZAYISENGA Marie Bella 26RP02449")
+st.write("3. NDONGOZI Chris Arsene 26RP00610")
+st.write("4. UMWIZA Alima 26RP01729")
 
 st.write("AI-powered fruit detection using YOLOv8n.")
 
