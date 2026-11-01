@@ -1,0 +1,154 @@
+
+import streamlit as st
+from ultralytics import YOLO
+from PIL import Image
+import pandas as pd
+import io
+
+st.set_page_config(
+    page_title="Fruit Detection System",
+    page_icon="🍎",
+    layout="wide",
+)
+
+st.title("🍎 Fruit Detection System")
+st.subheader("GROUP MEMBERS")
+
+st.write("1. MUGISHA EMMANUEL — 20RP00370")
+st.write("2. NDAYIMENYE SAMUEL — 26RP02292")
+st.write("3. IRABISHOBOYE GILBERT — 26RP00139")
+st.write("4. NSABIMANA RUKUNDO OLIVIEL — 26RP01994")
+
+st.write("AI-powered fruit detection using YOLOv8n.")
+
+# Class mapping: RF-DETR uses IDs 1, 2, 3 for the three classes
+CLASS_NAMES = {
+    1: "apple",
+    2: "banana",
+    3: "orange",
+}
+
+COLORS = {
+    "apple": (255, 0, 0),
+    "banana": (255, 200, 0),
+    "orange": (0, 180, 0),
+}
+
+@st.cache_resource
+def load_model():
+    return YOLO("best_corrected.pt")
+
+model = load_model()
+st.sidebar.header("Detection Settings")
+
+confidence = st.sidebar.slider(
+    "Confidence Threshold",
+    min_value=0.05,
+    max_value=0.95,
+    value=0.30,
+    step=0.05
+)
+
+uploaded_file = st.file_uploader(
+    "Upload a fruit image",
+    type=["jpg", "jpeg", "png"]
+)
+
+if uploaded_file:
+    image = Image.open(uploaded_file).convert("RGB")
+
+    st.subheader("Original Image")
+    st.image(image, use_column_width=True)
+
+    if st.button("🔍 Detect Fruits", type="primary"):
+
+        with st.spinner("Analyzing image..."):
+
+            results = model.predict(
+            image,
+            conf=confidence,
+            iou=0.45,
+            verbose=False
+            )
+
+            result = results[0]
+            boxes = result.boxes
+
+            annotated_image = result.plot()
+            annotated_image = Image.fromarray(
+                annotated_image[:, :, ::-1]
+            )
+
+            fruit_counts = {
+                "apple": 0,
+                "banana": 0,
+                "orange": 0
+            }
+
+            detection_data = []
+
+            if boxes is not None and len(boxes) > 0:
+                for box in boxes:
+                    class_id = int(box.cls[0])
+                    fruit = model.names[class_id].lower()
+                    score = float(box.conf[0])
+
+                    if fruit not in fruit_counts:
+                        continue
+
+                    fruit_counts[fruit] += 1
+
+                    detection_data.append({
+                        "Fruit": fruit.capitalize(),
+                        "Confidence": round(score * 100, 2)
+                    })
+
+            st.subheader("Detection Results")
+            st.image(annotated_image, use_column_width=True)
+
+            total = sum(fruit_counts.values())
+
+            st.subheader("📊 Fruit Detection Summary")
+
+            col1, col2, col3, col4 = st.columns(4)
+
+            col1.metric("Total Fruits", total)
+            col2.metric("🍎 Apples", fruit_counts["apple"])
+            col3.metric("🍌 Bananas", fruit_counts["banana"])
+            col4.metric("🍊 Oranges", fruit_counts["orange"])
+
+            st.subheader("Detection Details")
+
+            if detection_data:
+
+                df = pd.DataFrame(detection_data)
+
+                st.dataframe(
+                    df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+                csv = df.to_csv(index=False).encode("utf-8")
+
+                st.download_button(
+                    "Download Detection Results (CSV)",
+                    data=csv,
+                    file_name="fruit_detection_results.csv",
+                    mime="text/csv"
+                )
+
+                image_buffer = io.BytesIO()
+                annotated_image.save(image_buffer, format="PNG")
+
+                st.download_button(
+                    "Download Annotated Image",
+                    data=image_buffer.getvalue(),
+                    file_name="fruit_detection_result.png",
+                    mime="image/png"
+                )
+
+            else:
+                st.warning(
+                    "No fruits detected. Try lowering the confidence threshold."
+                )
