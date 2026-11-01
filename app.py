@@ -264,7 +264,9 @@ COLORS = {
 
 @st.cache_resource
 def load_model():
-    return YOLO("best_corrected.pt")
+    return YOLO("yolov8n.pt")
+
+model = load_model()
 
 
 model = load_model()
